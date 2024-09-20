@@ -1,6 +1,6 @@
 package org.yexey.common.util.csv.imp.joins;
 
-import org.yexey.common.util.csv.Record;
+import org.yexey.common.util.csv.imp.Record;
 
 import java.util.List;
 import java.util.Map;

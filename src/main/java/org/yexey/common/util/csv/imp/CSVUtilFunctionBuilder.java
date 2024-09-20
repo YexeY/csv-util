@@ -1,4 +1,4 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.util.csv.imp;
 
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -6,11 +6,21 @@ import java.util.function.Predicate;
 public class CSVUtilFunctionBuilder {
 
     public static Function<Record, Record> rename(String columnBefore, String columnAfter) {
-        return record -> record.rename(columnBefore, columnAfter);
+        return record -> {
+            if(!record.containsColumn(columnBefore)) {
+                throw new NullPointerException("Column " + columnBefore + " not found");
+            }
+            return record.rename(columnBefore, columnAfter);
+        };
     }
 
     public static Function<Record, Record> mapColumn(String column, Function<String, String> function) {
-        return record -> record.put(column, function.apply(record.get(column)));
+        return record -> {
+            if(!record.containsColumn(column)) {
+                throw new NullPointerException("Column " + column + " not found");
+            }
+            return record.put(column, function.apply(record.get(column)));
+        };
     }
 
     public static Function<Record, Record> deleteColumns(String... columns) {

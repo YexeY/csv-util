@@ -1,6 +1,6 @@
 package org.yexey.common.util.csv.imp.joins;
 
-import org.yexey.common.util.csv.Record;
+import org.yexey.common.util.csv.imp.Record;
 
 import java.util.List;
 import java.util.Map;
@@ -17,12 +17,22 @@ public class CSVStreamJoin {
     public static Stream<Record> join(Stream<Record> streamA, Stream<Record> streamB, String keyColumnA, String keyColumnB) {
         // Collect streamB into a Map from key to List of Records
         Map<String, List<Record>> mapB = streamB
-                .filter(record -> record.get(keyColumnB) != null)
+                .filter(record -> {
+                    if(!record.containsColumn(keyColumnB)) {
+                        throw new NullPointerException("KeyColumn " + keyColumnB + " does not exists in StreamB");
+                    }
+                    return record.get(keyColumnB) != null;
+                })
                 .collect(Collectors.groupingBy(record -> record.get(keyColumnB)));
 
         // Perform the inner join
         return streamA
-                .filter(recordA -> recordA.get(keyColumnA) != null)
+                .filter(recordA -> {
+                    if(!recordA.containsColumn(keyColumnA)) {
+                        throw new NullPointerException("KeyColumn " + keyColumnA + " does not exists in StreamA");
+                    }
+                    return recordA.get(keyColumnA) != null;
+                })
                 .flatMap(recordA -> {
                     String keyA = recordA.get(keyColumnA);
                     List<Record> matchingRecordsB = mapB.get(keyA);

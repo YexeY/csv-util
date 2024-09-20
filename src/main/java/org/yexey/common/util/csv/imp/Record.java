@@ -1,4 +1,4 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.util.csv.imp;
 
 import org.apache.commons.csv.CSVRecord;
 
@@ -47,7 +47,7 @@ public class Record {
     }
 
     public Record putIfAbsent(String columnName, String defaultValue) {
-        this.data.putIfAbsent(columnName, defaultValue);
+        this.data.compute(columnName, (k, v) -> v != null && !v.trim().isEmpty() ? v : defaultValue);
         return this;
     }
 

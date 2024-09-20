@@ -1,15 +1,11 @@
 package org.yexey.common.util.csv.imp;
 
 import org.apache.commons.csv.CSVRecord;
-import org.yexey.common.util.string.StringUtils;
-import org.yexey.common.util.csv.Record;
 
 import java.io.PrintStream;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class RecordCSVUtil {
 
@@ -103,7 +99,7 @@ public class RecordCSVUtil {
     }
    
     public static void printColumns(List<Record> csvRecords, PrintStream ps, String... columnNames) {
-        StringBuilder sb = new StringBuilder(StringUtils.join(columnNames, ","));
+        StringBuilder sb = new StringBuilder(stringJoin(columnNames, ","));
         sb.append(System.lineSeparator());
         for(Record elm : csvRecords){
             for (int i = 0; i < columnNames.length; i++) {
@@ -116,6 +112,18 @@ public class RecordCSVUtil {
             sb.append(System.lineSeparator());
         }
         ps.println(sb);
+    }
+
+    private static String stringJoin(String[] arr, String delimiter) {
+        if(arr == null || arr.length == 0) return "";
+        StringBuilder sb = new StringBuilder();
+        for(int i = 0; i < arr.length; i++) {
+            sb.append(arr[i]);
+            if(i < arr.length - 1) {
+                sb.append(delimiter);
+            }
+        }
+        return sb.toString();
     }
 
    
