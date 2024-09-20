@@ -22,8 +22,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CSVStream {
-
     private final PrintStream ps;
+
     private Stream<Record> stream;
     private final List<ValidationError> validationErrors;
 
@@ -31,6 +31,19 @@ public class CSVStream {
         this.stream = stream;
         ps = System.out;
         validationErrors = Collections.synchronizedList(new ArrayList<>());
+    }
+
+    public CSVStream copy() {
+        List<Record> recordsList = stream.toList();
+        Stream<Record> newStream = recordsList.stream();
+        this.stream = recordsList.stream();
+        return new CSVStream(newStream);
+    }
+
+    public CSVStream deepCopy() {
+        List<Record> recordsList = stream.toList();
+        this.stream = recordsList.stream();
+        return new CSVStream(recordsList.stream().map(Record::copy));
     }
 
     public static CSVStream toCSVStream(Reader reader, CSVFormat csvFormat) throws IOException {
@@ -71,19 +84,6 @@ public class CSVStream {
 
     public <K> Map<K, List<Record>> groupBy(Function<Record, K> classifier) {
         return stream.collect(Collectors.groupingBy(classifier));
-    }
-
-    public CSVStream copy() {
-        List<Record> recordsList = stream.toList();
-        Stream<Record> newStream = recordsList.stream();
-        this.stream = recordsList.stream();
-        return new CSVStream(newStream);
-    }
-
-    public CSVStream deepCopy() {
-        List<Record> recordsList = stream.toList();
-        this.stream = recordsList.stream();
-        return new CSVStream(recordsList.stream().map(Record::copy));
     }
 
     public <T> Stream<T> mapInto(Function<Record, T> mapper) {

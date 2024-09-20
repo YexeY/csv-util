@@ -29,9 +29,12 @@ class CSVUtilTest {
 
         csvStream = csvStream.printAsTable();
 
-        CSVStream tmp = CSVReader.fromFile("src/test/resources/access-code-password-recovery-code.csv", ';' ,StandardCharsets.UTF_8)
-                        .printAsTable();
-
+        CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                .setDelimiter(';')
+                .setHeader()
+                .setSkipHeaderRecord(true)
+                .build();
+        CSVStream tmp = CSVStream.toCSVStream(new FileReader("src/test/resources/src/test/resources/access-code-password-recovery-code.csv"), csvFormat);
         csvStream.join(tmp, "Identifier", "Identifier")
                 .printAsTable();
 
