@@ -13,13 +13,7 @@ import java.util.stream.Stream;
 
 public class CSVWriter {
 
-    private final Stream<Record> stream;
-
-    private CSVWriter(Stream<Record> stream) {
-        this.stream = stream;
-    }
-
-    public void writeTo(Writer writer, CSVFormat csvFormat) throws IOException {
+    public static void writeTo(Stream<Record> stream, Writer writer, CSVFormat csvFormat) throws IOException {
         try (CSVPrinter csvPrinter = new CSVPrinter(writer, csvFormat)) {
             // Get headers from CSVFormat if present
             String[] headers = csvFormat.getHeader();

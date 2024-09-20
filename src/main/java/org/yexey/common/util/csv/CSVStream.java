@@ -3,10 +3,8 @@ package org.yexey.common.util.csv;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.yexey.common.util.csv.imp.CSVUtilFunctionBuilder;
+import org.yexey.common.util.csv.imp.*;
 import org.yexey.common.util.csv.imp.Record;
-import org.yexey.common.util.csv.imp.RecordCSVUtil;
-import org.yexey.common.util.csv.imp.ValidationError;
 import org.yexey.common.util.csv.imp.joins.CSVStreamFullJoin;
 import org.yexey.common.util.csv.imp.joins.CSVStreamJoin;
 import org.yexey.common.util.csv.imp.joins.CSVStreamLeftJoin;
@@ -15,6 +13,7 @@ import org.yexey.common.util.csv.imp.joins.CSVStreamRightJoin;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.*;
 import java.util.function.BinaryOperator;
 import java.util.function.Consumer;
@@ -51,6 +50,10 @@ public class CSVStream {
 
     public static CSVStream of(Collection<org.yexey.common.util.csv.imp.Record> records) {
         return new CSVStream(records.stream());
+    }
+
+    public void writeTo(Writer writer, CSVFormat csvFormat) throws IOException {
+        CSVWriter.writeTo(stream, writer, csvFormat);
     }
 
     public CSVStream copy() {
