@@ -45,7 +45,7 @@ public class CSVWriter {
             }
         }
     }
-    private void writeRecord(CSVPrinter csvPrinter, Record record, String[] headers) throws IOException {
+    private static void writeRecord(CSVPrinter csvPrinter, Record record, String[] headers) throws IOException {
         List<String> values = new ArrayList<>();
         for (String header : headers) {
             values.add(record.get(header));

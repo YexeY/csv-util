@@ -1,23 +1,13 @@
 package org.yexey.common.util.csv.imp;
 
-import org.apache.commons.csv.CSVRecord;
-
 import java.io.PrintStream;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
-public class RecordCSVUtil {
+public class CSVPrinter {
 
-    public static List<Record> toListLinkedHashMap(Collection<CSVRecord> csvRecordsStream, List<String> headers) {
-        List<Record> csvRecords = new ArrayList<>();
-        for(var record : csvRecordsStream) {
-            LinkedHashMap<String, String> res = new LinkedHashMap<>(headers.size());
-            for(var header : headers) {
-                res.put(header, record.get(header));
-            }
-            csvRecords.add(new Record(res));
-        }
-        return csvRecords;
-    }
 
     public static void printAsTable(List<Record> csvRecords, PrintStream ps) {
         if(csvRecords == null || csvRecords.isEmpty()) return;
@@ -94,33 +84,5 @@ public class RecordCSVUtil {
             }
         }
         ps.println(sb);
-    }
-   
-    public static void printColumns(List<Record> csvRecords, PrintStream ps, String... columnNames) {
-        StringBuilder sb = new StringBuilder(stringJoin(columnNames, ","));
-        sb.append(System.lineSeparator());
-        for(Record elm : csvRecords){
-            for (int i = 0; i < columnNames.length; i++) {
-                var columnName = columnNames[i];
-                sb.append(elm.get(columnName));
-                if (i < columnNames.length - 1) {
-                    sb.append(',');
-                }
-            }
-            sb.append(System.lineSeparator());
-        }
-        ps.println(sb);
-    }
-
-    private static String stringJoin(String[] arr, String delimiter) {
-        if(arr == null || arr.length == 0) return "";
-        StringBuilder sb = new StringBuilder();
-        for(int i = 0; i < arr.length; i++) {
-            sb.append(arr[i]);
-            if(i < arr.length - 1) {
-                sb.append(delimiter);
-            }
-        }
-        return sb.toString();
     }
 }

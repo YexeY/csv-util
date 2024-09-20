@@ -1,10 +1,10 @@
 package org.yexey.common.util.csv.imp;
 
 public class ValidationError {
-    private final org.yexey.common.util.csv.imp.Record record;
+    private final Record record;
     private final String message;
 
-    public ValidationError(org.yexey.common.util.csv.imp.Record record, String message) {
+    public ValidationError(Record record, String message) {
         this.record = record;
         this.message = message;
     }

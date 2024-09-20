@@ -27,8 +27,8 @@ class CSVStreamCopyTest {
         copiedStream = copiedStream.mapColumn("Age", age -> String.valueOf(Integer.parseInt(age) + 5));
 
         // Collect records from both streams
-        List<org.yexey.common.util.csv.imp.Record> originalRecords = originalStream.toList();
-        List<org.yexey.common.util.csv.imp.Record> copiedRecords = copiedStream.toList();
+        List<Record> originalRecords = originalStream.toList();
+        List<Record> copiedRecords = copiedStream.toList();
 
         // Assertions
         // Original stream records should reflect the changes made in the copied stream
@@ -55,7 +55,7 @@ class CSVStreamCopyTest {
         deepCopiedStream = deepCopiedStream.mapColumn("Age", age -> String.valueOf(Integer.parseInt(age) + 5));
 
         // Collect records from both streams
-        List<org.yexey.common.util.csv.imp.Record> originalRecords = originalStream.toList();
+        List<Record> originalRecords = originalStream.toList();
         List<Record> deepCopiedRecords = deepCopiedStream.toList();
 
         // Assertions

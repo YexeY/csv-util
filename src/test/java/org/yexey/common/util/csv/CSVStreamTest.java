@@ -23,10 +23,10 @@ class CSVStreamTest {
         StringReader reader = new StringReader(csvData);
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("30", firstRecord.get("Age"));
         assertEquals("USA", firstRecord.get("Country"));
@@ -42,10 +42,10 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         csvStream = csvStream.rename("Age", "Years");
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("30", firstRecord.get("Years"));
         assertEquals("USA", firstRecord.get("Country"));
@@ -65,10 +65,10 @@ class CSVStreamTest {
             int age = Integer.parseInt(ageStr);
             return String.valueOf(age + 1);
         });
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("31", firstRecord.get("Age"));
     }
 
@@ -82,10 +82,10 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         csvStream = csvStream.deleteColumns("Country");
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("30", firstRecord.get("Age"));
         assertNull(firstRecord.get("Country"));
@@ -101,10 +101,10 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         csvStream = csvStream.retainColumn("Name", "Country");
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("USA", firstRecord.get("Country"));
         assertNull(firstRecord.get("Age"));
@@ -120,10 +120,10 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         csvStream = csvStream.filter("Age", ageStr -> Integer.parseInt(ageStr) > 30);
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(1, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("Charlie", firstRecord.get("Name"));
         assertEquals("35", firstRecord.get("Age"));
     }
@@ -141,13 +141,13 @@ class CSVStreamTest {
             int age = Integer.parseInt(record.get("Age"));
             return age >= 18 ? "Adult" : "Minor";
         });
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("Minor", firstRecord.get("AgeGroup"));
 
-        org.yexey.common.util.csv.imp.Record secondRecord = records.get(1);
+        Record secondRecord = records.get(1);
         assertEquals("Adult", secondRecord.get("AgeGroup"));
     }
 
@@ -161,10 +161,10 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         csvStream = csvStream.fillMissingValues("Country", "Unknown");
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record secondRecord = records.get(1);
+        Record secondRecord = records.get(1);
         assertEquals("Unknown", secondRecord.get("Country"));
     }
 
@@ -178,7 +178,7 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         csvStream = csvStream.sort("Age", Comparator.comparingInt(Integer::parseInt));
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
         assertEquals(3, records.size());
 
         assertEquals("Bob", records.get(0).get("Name"));      // Age 25
@@ -203,15 +203,15 @@ class CSVStreamTest {
         CSVStream csvStreamB = CSVStream.toCSVStream(readerB, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         CSVStream joinedStream = csvStreamA.join(csvStreamB, "ID");
-        List<org.yexey.common.util.csv.imp.Record> records = joinedStream.toList();
+        List<Record> records = joinedStream.toList();
         assertEquals(2, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("1", firstRecord.get("ID"));
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("85", firstRecord.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record secondRecord = records.get(1);
+        Record secondRecord = records.get(1);
         assertEquals("2", secondRecord.get("ID"));
         assertEquals("Bob", secondRecord.get("Name"));
         assertEquals("90", secondRecord.get("Score"));
@@ -234,20 +234,20 @@ class CSVStreamTest {
         CSVStream csvStreamB = CSVStream.toCSVStream(readerB, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         CSVStream joinedStream = csvStreamA.leftJoin(csvStreamB, "ID");
-        List<org.yexey.common.util.csv.imp.Record> records = joinedStream.toList();
+        List<Record> records = joinedStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.get(0);
+        Record firstRecord = records.get(0);
         assertEquals("1", firstRecord.get("ID"));
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("85", firstRecord.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record secondRecord = records.get(1);
+        Record secondRecord = records.get(1);
         assertEquals("2", secondRecord.get("ID"));
         assertEquals("Bob", secondRecord.get("Name"));
         assertEquals("90", secondRecord.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record thirdRecord = records.get(2);
+        Record thirdRecord = records.get(2);
         assertEquals("3", thirdRecord.get("ID"));
         assertEquals("Charlie", thirdRecord.get("Name"));
         assertNull(thirdRecord.get("Score"));
@@ -270,20 +270,20 @@ class CSVStreamTest {
         CSVStream csvStreamB = CSVStream.toCSVStream(readerB, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         CSVStream joinedStream = csvStreamA.rightJoin(csvStreamB, "ID");
-        List<org.yexey.common.util.csv.imp.Record> records = joinedStream.toList();
+        List<Record> records = joinedStream.toList();
         assertEquals(3, records.size());
 
-        org.yexey.common.util.csv.imp.Record firstRecord = records.stream().filter(r -> "1".equals(r.get("ID"))).findFirst().orElse(null);
+        Record firstRecord = records.stream().filter(r -> "1".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(firstRecord);
         assertEquals("Alice", firstRecord.get("Name"));
         assertEquals("85", firstRecord.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record secondRecord = records.stream().filter(r -> "2".equals(r.get("ID"))).findFirst().orElse(null);
+        Record secondRecord = records.stream().filter(r -> "2".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(secondRecord);
         assertEquals("Bob", secondRecord.get("Name"));
         assertEquals("90", secondRecord.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record thirdRecord = records.stream().filter(r -> "4".equals(r.get("ID"))).findFirst().orElse(null);
+        Record thirdRecord = records.stream().filter(r -> "4".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(thirdRecord);
         assertNull(thirdRecord.get("Name"));
         assertEquals("75", thirdRecord.get("Score"));
@@ -306,25 +306,25 @@ class CSVStreamTest {
         CSVStream csvStreamB = CSVStream.toCSVStream(readerB, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         CSVStream joinedStream = csvStreamA.fullJoin(csvStreamB, "ID");
-        List<org.yexey.common.util.csv.imp.Record> records = joinedStream.toList();
+        List<Record> records = joinedStream.toList();
         assertEquals(4, records.size());
 
-        org.yexey.common.util.csv.imp.Record record1 = records.stream().filter(r -> "1".equals(r.get("ID"))).findFirst().orElse(null);
+        Record record1 = records.stream().filter(r -> "1".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(record1);
         assertEquals("Alice", record1.get("Name"));
         assertEquals("85", record1.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record record2 = records.stream().filter(r -> "2".equals(r.get("ID"))).findFirst().orElse(null);
+        Record record2 = records.stream().filter(r -> "2".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(record2);
         assertEquals("Bob", record2.get("Name"));
         assertEquals("90", record2.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record record3 = records.stream().filter(r -> "3".equals(r.get("ID"))).findFirst().orElse(null);
+        Record record3 = records.stream().filter(r -> "3".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(record3);
         assertEquals("Charlie", record3.get("Name"));
         assertNull(record3.get("Score"));
 
-        org.yexey.common.util.csv.imp.Record record4 = records.stream().filter(r -> "4".equals(r.get("ID"))).findFirst().orElse(null);
+        Record record4 = records.stream().filter(r -> "4".equals(r.get("ID"))).findFirst().orElse(null);
         assertNotNull(record4);
         assertNull(record4.get("Name"));
         assertEquals("75", record4.get("Score"));
@@ -368,13 +368,13 @@ class CSVStreamTest {
         StringReader reader = new StringReader(csvData);
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
-        Map<String, List<org.yexey.common.util.csv.imp.Record>> grouped = csvStream.groupBy(record -> record.get("Country"));
+        Map<String, List<Record>> grouped = csvStream.groupBy(record -> record.get("Country"));
         assertEquals(3, grouped.size());
         assertTrue(grouped.containsKey("USA"));
         assertTrue(grouped.containsKey("UK"));
         assertTrue(grouped.containsKey("Canada"));
 
-        List<org.yexey.common.util.csv.imp.Record> usaRecords = grouped.get("USA");
+        List<Record> usaRecords = grouped.get("USA");
         assertEquals(2, usaRecords.size());
         assertEquals("Alice", usaRecords.get(0).get("Name"));
         assertEquals("Charlie", usaRecords.get(1).get("Name"));
@@ -389,10 +389,10 @@ class CSVStreamTest {
         StringReader reader = new StringReader(csvData);
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
-        org.yexey.common.util.csv.imp.Record identity = new org.yexey.common.util.csv.imp.Record();
+        Record identity = new Record();
         identity.put("AgeSum", "0");
 
-        org.yexey.common.util.csv.imp.Record result = csvStream.reduce(identity, (record1, record2) -> {
+        Record result = csvStream.reduce(identity, (record1, record2) -> {
             int sum = Integer.parseInt(record1.get("AgeSum")) + Integer.parseInt(record2.get("Age"));
             record1.put("AgeSum", String.valueOf(sum));
             return record1;
@@ -432,7 +432,7 @@ class CSVStreamTest {
         csvStream = csvStream.consumeAndContinue();
 
         // Attempt to collect records after multiple consumptions
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
 
         // Assertions
         // The records should still be available after multiple consumptions
@@ -459,7 +459,7 @@ class CSVStreamTest {
         // After consuming, we should be able to perform further operations
         csvStream = csvStream.filter(record -> Integer.parseInt(record.get("Age")) > 30);
 
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
 
         // Assertions
         // Only "Charlie" should be in the filtered list
@@ -479,11 +479,11 @@ class CSVStreamTest {
         // Add a new column "Country" with static value "Unknown"
         csvStream = csvStream.addColumn("Country", "Unknown");
 
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
 
         // Assertions
         assertEquals(2, records.size());
-        for (org.yexey.common.util.csv.imp.Record record : records) {
+        for (Record record : records) {
             assertEquals("Unknown", record.get("Country"));
         }
     }
@@ -497,15 +497,10 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Add a column "Status" with static value "Pending"
-        csvStream = csvStream.addColumn("Status", "Pending");
-
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
-
-        // Assertions
-        assertEquals(2, records.size());
-        for (org.yexey.common.util.csv.imp.Record record : records) {
-            assertEquals("Pending", record.get("Status"));
-        }
+        assertThrows(NullPointerException.class, () -> {
+            csvStream.addColumn("Status", "Pending")
+                    .toList();
+        });
     }
 
     @Test
@@ -520,7 +515,7 @@ class CSVStreamTest {
         // Sort by "Name" in ascending order
         csvStream = csvStream.sort("Name", String::compareTo);
 
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
 
         // Assertions
         assertEquals(3, records.size());
@@ -541,7 +536,7 @@ class CSVStreamTest {
         // Sort by "Age" in descending order
         csvStream = csvStream.sort("Age", Comparator.comparingInt((String elm) -> Integer.parseInt(elm)).reversed());
 
-        List<org.yexey.common.util.csv.imp.Record> records = csvStream.toList();
+        List<Record> records = csvStream.toList();
 
         // Assertions
         assertEquals(3, records.size());

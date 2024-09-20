@@ -4,6 +4,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.yexey.common.util.csv.imp.*;
+
 import org.yexey.common.util.csv.imp.Record;
 import org.yexey.common.util.csv.imp.joins.CSVStreamFullJoin;
 import org.yexey.common.util.csv.imp.joins.CSVStreamJoin;
@@ -25,30 +26,30 @@ import java.util.stream.Stream;
 public class CSVStream {
     private final PrintStream ps;
 
-    private Stream<org.yexey.common.util.csv.imp.Record> stream;
+    private Stream<Record> stream;
     private final List<ValidationError> validationErrors;
 
-    protected CSVStream(Stream<org.yexey.common.util.csv.imp.Record> stream, List<ValidationError> validationErrors) {
+    protected CSVStream(Stream<Record> stream, List<ValidationError> validationErrors) {
         this.stream = stream;
         ps = System.out;
         this.validationErrors = validationErrors;
     }
 
-    protected CSVStream(Stream<org.yexey.common.util.csv.imp.Record> stream) {
+    protected CSVStream(Stream<Record> stream) {
         this(stream, Collections.synchronizedList(new ArrayList<>()));
     }
 
     public static CSVStream toCSVStream(Reader reader, CSVFormat csvFormat) throws IOException {
         CSVParser csvParser = new CSVParser(reader, csvFormat);
         Stream<CSVRecord> recordStream = csvParser.stream();
-        return new CSVStream(recordStream.map(org.yexey.common.util.csv.imp.Record::new));
+        return new CSVStream(recordStream.map(Record::new));
     }
 
     public static CSVStream ofCSVRecords(Collection<CSVRecord> records) {
-        return new CSVStream(records.stream().map(elm -> new org.yexey.common.util.csv.imp.Record(elm.toMap())));
+        return new CSVStream(records.stream().map(elm -> new Record(elm.toMap())));
     }
 
-    public static CSVStream of(Collection<org.yexey.common.util.csv.imp.Record> records) {
+    public static CSVStream of(Collection<Record> records) {
         return new CSVStream(records.stream());
     }
 
@@ -57,23 +58,23 @@ public class CSVStream {
     }
 
     public CSVStream copy() {
-        List<org.yexey.common.util.csv.imp.Record> recordsList = stream.toList();
-        Stream<org.yexey.common.util.csv.imp.Record> newStream = recordsList.stream();
+        List<Record> recordsList = stream.toList();
+        Stream<Record> newStream = recordsList.stream();
         this.stream = recordsList.stream();
         return new CSVStream(newStream, validationErrors);
     }
 
     public CSVStream deepCopy() {
-        List<org.yexey.common.util.csv.imp.Record> recordsList = stream.toList();
+        List<Record> recordsList = stream.toList();
         this.stream = recordsList.stream();
-        return new CSVStream(recordsList.stream().map(org.yexey.common.util.csv.imp.Record::copy));
+        return new CSVStream(recordsList.stream().map(Record::copy));
     }
 
-    public List<org.yexey.common.util.csv.imp.Record> toList() {
+    public List<Record> toList() {
         return stream.toList();
     }
 
-    public CSVStream peek(Consumer<org.yexey.common.util.csv.imp.Record> consumer) {
+    public CSVStream peek(Consumer<Record> consumer) {
         return new CSVStream(stream.peek(consumer), validationErrors);
     }
 
@@ -85,7 +86,7 @@ public class CSVStream {
         if(validator == null) {
             throw new NullPointerException("Validator must not be null");
         }
-        Stream<org.yexey.common.util.csv.imp.Record> validatedStream = stream.peek(record -> {
+        Stream<Record> validatedStream = stream.peek(record -> {
             String value = record.get(column);
             if (!validator.test(value)) {
                 String message = errorMessage != null ? errorMessage : "Validation failed for column: " + column;
@@ -95,11 +96,11 @@ public class CSVStream {
         return new CSVStream(validatedStream, validationErrors);
     }
 
-    public CSVStream validate(Predicate<org.yexey.common.util.csv.imp.Record> validator, String errorMessage) {
+    public CSVStream validate(Predicate<Record> validator, String errorMessage) {
         if(validator == null) {
             throw new NullPointerException("Validator must not be null");
         }
-        Stream<org.yexey.common.util.csv.imp.Record> validatedStream = stream.peek(record -> {
+        Stream<Record> validatedStream = stream.peek(record -> {
             if (!validator.test(record)) {
                 String message = errorMessage != null ? errorMessage : "Validation failed for record";
                 validationErrors.add(new ValidationError(record, message));
@@ -108,15 +109,15 @@ public class CSVStream {
         return new CSVStream(validatedStream, validationErrors);
     }
 
-    public org.yexey.common.util.csv.imp.Record reduce(org.yexey.common.util.csv.imp.Record identity, BinaryOperator<org.yexey.common.util.csv.imp.Record> accumulator) {
+    public Record reduce(Record identity, BinaryOperator<Record> accumulator) {
         return stream.reduce(identity, accumulator);
     }
 
-    public <K> Map<K, List<org.yexey.common.util.csv.imp.Record>> groupBy(Function<org.yexey.common.util.csv.imp.Record, K> classifier) {
+    public <K> Map<K, List<Record>> groupBy(Function<Record, K> classifier) {
         return stream.collect(Collectors.groupingBy(classifier));
     }
 
-    public <T> Stream<T> map(Function<org.yexey.common.util.csv.imp.Record, T> mapper) {
+    public <T> Stream<T> map(Function<Record, T> mapper) {
         return stream.map(mapper);
     }
 
@@ -140,7 +141,7 @@ public class CSVStream {
         return new CSVStream(tmp, validationErrors);
     }
 
-    public CSVStream filter(Predicate<org.yexey.common.util.csv.imp.Record> predicate) {
+    public CSVStream filter(Predicate<Record> predicate) {
       var tmp = stream.filter(predicate);
       return new CSVStream(tmp, validationErrors);
     }
@@ -150,7 +151,7 @@ public class CSVStream {
         return new CSVStream(tmp, validationErrors);
     }
 
-    public CSVStream addColumn(String columnName, Function<org.yexey.common.util.csv.imp.Record, String> valueFunction) {
+    public CSVStream addColumn(String columnName, Function<Record, String> valueFunction) {
         var tmp = stream.map(CSVUtilFunctionBuilder.addColumn(columnName, valueFunction));
         return new CSVStream(tmp, validationErrors);
     }
@@ -166,34 +167,34 @@ public class CSVStream {
     }
 
     public CSVStream printAsTable() {
-        List<org.yexey.common.util.csv.imp.Record> list = stream.collect(Collectors.toList());
-        RecordCSVUtil.printAsTable(list, ps);
+        List<Record> list = stream.collect(Collectors.toList());
+        CSVPrinter.printAsTable(list, ps);
         return new CSVStream(list.stream(), validationErrors);
     }
 
     public CSVStream printColumnsAsTable(String... columnNames) {
-        List<org.yexey.common.util.csv.imp.Record> list = stream.collect(Collectors.toList());
-        RecordCSVUtil.printColumnsAsTable(list, ps, columnNames);
+        List<Record> list = stream.collect(Collectors.toList());
+        CSVPrinter.printColumnsAsTable(list, ps, columnNames);
         return new CSVStream(list.stream(), validationErrors);
     }
 
     public CSVStream printColumns(String... columnNames) {
-        Stream<org.yexey.common.util.csv.imp.Record> tmp = stream.peek(record -> RecordCSVUtil.printColumnsForSingleRecord(record, ps, columnNames));
+        Stream<Record> tmp = stream.peek(record -> CSVPrinter.printColumnsForSingleRecord(record, ps, columnNames));
         return new CSVStream(tmp, validationErrors);
     }
 
     public CSVStream print() {
-        Stream<org.yexey.common.util.csv.imp.Record> tmp = stream.peek(record -> RecordCSVUtil.printSingleRecord(record, ps));
+        Stream<Record> tmp = stream.peek(record -> CSVPrinter.printSingleRecord(record, ps));
         return new CSVStream(tmp, validationErrors);
     }
 
     public CSVStream sort(String column, Comparator<String> comparator) {
-        Comparator<org.yexey.common.util.csv.imp.Record> recordComparator = (record1, record2) -> comparator.compare(record1.get(column), (record2.get(column)));
-        Stream<org.yexey.common.util.csv.imp.Record> tmp = stream.sorted(recordComparator);
+        Comparator<Record> recordComparator = (record1, record2) -> comparator.compare(record1.get(column), (record2.get(column)));
+        Stream<Record> tmp = stream.sorted(recordComparator);
         return new CSVStream(tmp, validationErrors);
     }
 
-    public CSVStream sort(Comparator<org.yexey.common.util.csv.imp.Record> comparator) {
+    public CSVStream sort(Comparator<Record> comparator) {
         var tmp = stream.sorted(comparator);
         return new CSVStream(tmp, validationErrors);
     }
@@ -203,7 +204,7 @@ public class CSVStream {
     }
 
     public CSVStream join(CSVStream other, String keyColumnCSVA, String keyColumnCSVB) {
-        Stream<org.yexey.common.util.csv.imp.Record> resultStream = CSVStreamJoin.join(this.stream, other.stream, keyColumnCSVA, keyColumnCSVB);
+        Stream<Record> resultStream = CSVStreamJoin.join(this.stream, other.stream, keyColumnCSVA, keyColumnCSVB);
         return new CSVStream(resultStream, validationErrors);
     }
 
@@ -212,7 +213,7 @@ public class CSVStream {
     }
 
     public CSVStream leftJoin(CSVStream other, String keyColumnCSVA, String keyColumnCSVB) {
-        Stream<org.yexey.common.util.csv.imp.Record> resultStream = CSVStreamLeftJoin.leftJoin(this.stream, other.stream, keyColumnCSVA, keyColumnCSVB);
+        Stream<Record> resultStream = CSVStreamLeftJoin.leftJoin(this.stream, other.stream, keyColumnCSVA, keyColumnCSVB);
         return new CSVStream(resultStream, validationErrors);
     }
 
@@ -221,7 +222,7 @@ public class CSVStream {
     }
 
     public CSVStream rightJoin(CSVStream other, String keyColumnCSVA, String keyColumnCSVB) {
-        Stream<org.yexey.common.util.csv.imp.Record> resultStream = CSVStreamRightJoin.rightJoin(this.stream, other.stream, keyColumnCSVA, keyColumnCSVB);
+        Stream<Record> resultStream = CSVStreamRightJoin.rightJoin(this.stream, other.stream, keyColumnCSVA, keyColumnCSVB);
         return new CSVStream(resultStream, validationErrors);
     }
 
