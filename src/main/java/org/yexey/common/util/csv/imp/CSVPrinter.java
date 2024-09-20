@@ -8,7 +8,6 @@ import java.util.Map;
 
 public class CSVPrinter {
 
-
     public static void printAsTable(List<Record> csvRecords, PrintStream ps) {
         if(csvRecords == null || csvRecords.isEmpty()) return;
         printColumnsAsTable(csvRecords, ps, csvRecords.getFirst().getColumnNames().toArray(new String[0]));

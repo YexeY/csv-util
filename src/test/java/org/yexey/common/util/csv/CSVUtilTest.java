@@ -48,10 +48,7 @@ class CSVUtilTest {
                 .setHeader()
                 .setSkipHeaderRecord(true)
                 .build();
-        CSVParser csvParser = new CSVParser(in, csvFormat);
-        csvParser.iterator();
-        List<CSVRecord> records = csvParser.getRecords();
-        CSVStream cs = CSVStream.ofCSVRecords(records);
+        CSVStream cs = CSVStream.toCSVStream(in, csvFormat);
         return cs;
     }
 }
