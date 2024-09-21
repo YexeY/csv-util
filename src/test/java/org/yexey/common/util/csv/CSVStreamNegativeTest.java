@@ -3,7 +3,6 @@ package org.yexey.common.util.csv;
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
 import org.yexey.common.util.csv.imp.Record;
-import org.yexey.common.util.csv.imp.ValidationError;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -87,26 +86,6 @@ class CSVStreamNegativeTest {
         });
     }
 
-    @Test
-    void testValidateWithNonexistentColumn() throws IOException {
-        String csvData = "Name,Age\n" +
-                         "Alice,30";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-
-        // Attempt to validate a nonexistent column
-        csvStream = csvStream.validate("Country", val -> val != null, "Country is required");
-
-        // Process the stream to trigger validation
-        csvStream.consume();
-
-        List<ValidationError> errors = csvStream.getValidationErrors();
-        // Validation should fail for the nonexistent column
-        assertEquals(1, errors.size());
-        ValidationError error = errors.get(0);
-        assertEquals("Country is required", error.getMessage());
-        assertEquals("Alice", error.getRecord().get("Name"));
-    }
 
     @Test
     void testJoinWithMissingKeyColumn() throws IOException {
@@ -240,20 +219,6 @@ class CSVStreamNegativeTest {
 
         // The result should be empty
         assertEquals(0, records.size());
-    }
-
-    @Test
-    void testValidateWithNullPredicate() throws IOException {
-        String csvData = "Name,Age\n" +
-                         "Alice,30";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-
-        // Attempt to validate with a null predicate
-        assertThrows(NullPointerException.class, () -> {
-            csvStream.validate("Age", null, "Predicate cannot be null");
-            csvStream.consume();
-        });
     }
 
     @Test

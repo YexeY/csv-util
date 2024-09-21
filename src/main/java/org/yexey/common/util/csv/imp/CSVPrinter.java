@@ -61,25 +61,25 @@ public class CSVPrinter {
         }
     }
 
-    public static void printColumnsForSingleRecord(Record csvRecord, PrintStream ps, String... columnNames) {
+    public static void printColumnsForSingleRecord(Record csvRecord, PrintStream ps, String delimiter, String... columnNames) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < columnNames.length; i++) {
             var columnName = columnNames[i];
             sb.append(csvRecord.get(columnName));
             if (i < columnNames.length - 1) {
-                sb.append(',');
+                sb.append(delimiter);
             }
         }
         ps.println(sb);
     }
 
-    public static void printSingleRecord(Record csvRecord, PrintStream ps) {
+    public static void printSingleRecord(Record csvRecord, PrintStream ps, String delimiter) {
         StringBuilder sb = new StringBuilder();
         for (Iterator<String> iterator = csvRecord.getValues().iterator(); iterator.hasNext(); ) {
             String value = iterator.next();
             sb.append(value);
             if (iterator.hasNext()) {
-                sb.append(',');
+                sb.append(delimiter);
             }
         }
         ps.println(sb);

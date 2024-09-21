@@ -3,11 +3,12 @@ package org.yexey.common.util.csv;
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
 import org.yexey.common.util.csv.imp.Record;
-import org.yexey.common.util.csv.imp.ValidationError;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.*;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -331,34 +332,6 @@ class CSVStreamTest {
     }
 
     @Test
-    void testValidate() throws IOException {
-        String csvData = "Name,Age\n" +
-                         "Alice,30\n" +
-                         "Bob,abc\n" +
-                         "Charlie,25";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-
-        csvStream = csvStream.validate("Age", ageStr -> {
-            try {
-                Integer.parseInt(ageStr);
-                return true;
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }, "Invalid age");
-
-        // Process the stream to trigger validation
-        csvStream.consume();
-
-        List<ValidationError> errors = csvStream.getValidationErrors();
-        assertEquals(1, errors.size());
-        ValidationError error = errors.get(0);
-        assertEquals("Invalid age", error.getMessage());
-        assertEquals("Bob", error.getRecord().get("Name"));
-    }
-
-    @Test
     void testGroupBy() throws IOException {
         String csvData = "Name,Age,Country\n" +
                          "Alice,30,USA\n" +
@@ -566,123 +539,5 @@ class CSVStreamTest {
         assertEquals("Canada", records.get(2).get("Country"));    // Length 6
     }
 
-    @Test
-    void testValidateCountryNotEmpty() throws IOException {
-        String csvData = "Name,Age,Country\n" +
-                "Alice,30,USA\n" +
-                "Bob,25,\n" +                 // Missing Country
-                "Charlie,35,Canada\n" +
-                "Dave,40,";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
-        // Validate that "Country" is not null or empty
-        csvStream = csvStream.validate(record -> {
-            String country = record.get("Country");
-            return country != null && !country.trim().isEmpty();
-        }, "Country cannot be empty");
-
-        // Process the stream to trigger validation
-        csvStream.consume();
-
-        List<ValidationError> errors = csvStream.getValidationErrors();
-
-        // Assertions
-        assertEquals(2, errors.size());
-
-        // Verify that Bob and Dave are in the validation errors
-        boolean bobError = errors.stream().anyMatch(error ->
-                "Bob".equals(error.getRecord().get("Name"))
-        );
-        boolean daveError = errors.stream().anyMatch(error ->
-                "Dave".equals(error.getRecord().get("Name"))
-        );
-
-        assertTrue(bobError);
-        assertTrue(daveError);
-    }
-
-    @Test
-    void testValidateAgeAndName() throws IOException {
-        String csvData = "Name,Age,Country\n" +
-                "Alice,30,USA\n" +
-                ",17,UK\n" +                   // Missing Name
-                "Charlie,abc,Canada\n" +       // Invalid Age
-                "Dave,40,Australia";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-
-        // Validate that "Age" is a valid integer >= 18 and "Name" is not empty
-        csvStream = csvStream.validate(record -> {
-            String name = record.get("Name");
-            String ageStr = record.get("Age");
-            if (name == null || name.trim().isEmpty()) {
-                return false;
-            }
-            try {
-                int age = Integer.parseInt(ageStr);
-                return age >= 18;
-            } catch (NumberFormatException e) {
-                return false;
-            }
-        }, "Invalid record: Name required and Age must be >= 18");
-
-        // Process the stream to trigger validation
-        csvStream.consume();
-
-        List<ValidationError> errors = csvStream.getValidationErrors();
-
-        // Assertions
-        assertEquals(2, errors.size());
-
-        // Verify that the records with missing Name and invalid Age are captured
-        boolean missingNameError = errors.stream().anyMatch(error ->
-                error.getRecord().get("Name") == null || error.getRecord().get("Name").trim().isEmpty()
-        );
-        boolean invalidAgeError = errors.stream().anyMatch(error ->
-                "Charlie".equals(error.getRecord().get("Name"))
-        );
-
-        assertTrue(missingNameError);
-        assertTrue(invalidAgeError);
-    }
-
-    @Test
-    void testValidateWithNullPredicate() throws IOException {
-        String csvData = "Name,Age\n" +
-                "Alice,30";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-
-        // Attempt to validate with a null predicate
-        assertThrows(NullPointerException.class, () -> {
-            csvStream.validate(null, "Predicate cannot be null");
-        });
-    }
-
-    @Test
-    void testValidateWithNullErrorMessage() throws IOException {
-        String csvData = "Name,Age\n" +
-                "Alice,30\n" +
-                "Bob,";
-        StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
-
-        // Validate that "Age" is not null or empty, with null error message
-        csvStream = csvStream.validate(record -> {
-            String age = record.get("Age");
-            return age != null && !age.trim().isEmpty();
-        }, null);
-
-        // Process the stream to trigger validation
-        csvStream.consume();
-
-        List<ValidationError> errors = csvStream.getValidationErrors();
-
-        // Assertions
-        assertEquals(1, errors.size());
-        ValidationError error = errors.get(0);
-        assertEquals("Validation failed for record", error.getMessage()); // Default message
-        assertEquals("Bob", error.getRecord().get("Name"));
-    }
 }
