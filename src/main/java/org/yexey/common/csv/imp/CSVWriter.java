@@ -8,19 +8,20 @@ import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CSVWriter {
 
     public static void writeTo(Stream<Record> stream, Writer writer, CSVFormat csvFormat) throws IOException {
         // Collect records to a list to allow multiple iterations
-        List<Record> records = stream.toList();
+        List<Record> records = stream.collect(Collectors.toList());
 
         // Determine headers
         String[] headers = csvFormat.getHeader();
         if ((headers == null || headers.length == 0) && !records.isEmpty()) {
             // Get headers from the first record
-            Set<String> headerSet = records.getFirst().getColumnNames();
+            Set<String> headerSet = records.get(0).getColumnNames();
             headers = headerSet.toArray(new String[0]);
             // Update CSVFormat with headers
             csvFormat = csvFormat.builder().setHeader(headers).build();

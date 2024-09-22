@@ -42,20 +42,20 @@ public class CSVStream {
     }
 
     public CSVStream copy() {
-        List<Record> recordsList = stream.toList();
+        List<Record> recordsList = stream.collect(Collectors.toList());
         Stream<Record> newStream = recordsList.stream();
         this.stream = recordsList.stream();
         return new CSVStream(newStream);
     }
 
     public CSVStream deepCopy() {
-        List<Record> recordsList = stream.toList();
+        List<Record> recordsList = stream.collect(Collectors.toList());
         this.stream = recordsList.stream();
-        return new CSVStream(recordsList.stream().map(Record::copy).toList().stream());
+        return new CSVStream(recordsList.stream().map(Record::copy).collect(Collectors.toList()).stream());
     }
 
     public List<Record> toList() {
-        return stream.toList();
+        return stream.collect(Collectors.toList());
     }
 
     public CSVStream peek(Consumer<Record> consumer) {
@@ -170,12 +170,12 @@ public class CSVStream {
     }
 
     public CSVStream consumeAndContinue() {
-        var tmp = stream.toList();
+        var tmp = stream.collect(Collectors.toList());
         return new CSVStream(tmp.stream());
     }
 
     public void consume() {
-        stream.forEach(_ -> {});
+        stream.forEach((elm) -> {});
     }
 
     //-------------------------- Joining stuff
@@ -305,7 +305,7 @@ public class CSVStream {
         Objects.requireNonNull(validator, "Validator must not be null");
 
         List<ValidationError> errors = new ArrayList<>();
-        List<Record> records = stream.toList();
+        List<Record> records = stream.collect(Collectors.toList());
         for (Record record : records) {
             if (!record.containsColumn(column)) {
                 errors.add(new ValidationError(record, "Column " + column + " not found"));

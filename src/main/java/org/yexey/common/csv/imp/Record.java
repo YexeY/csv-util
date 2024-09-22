@@ -3,6 +3,7 @@ package org.yexey.common.csv.imp;
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Record {
 
@@ -69,7 +70,7 @@ public class Record {
     }
 
     public Record retainColumns(String... columnNames) {
-        List<String> list = Arrays.stream(columnNames).toList();
+        List<String> list = Arrays.stream(columnNames).collect(Collectors.toList());
         for(String column : new ArrayList<>(getColumnNames())) {
             if(!list.contains(column)) {
                 this.deleteColumn(column);

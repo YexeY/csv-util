@@ -10,7 +10,7 @@ public class CSVPrinter {
 
     public static void printAsTable(List<Record> csvRecords, PrintStream ps) {
         if(csvRecords == null || csvRecords.isEmpty()) return;
-        printColumnsAsTable(csvRecords, ps, csvRecords.getFirst().getColumnNames().toArray(new String[0]));
+        printColumnsAsTable(csvRecords, ps, csvRecords.get(0).getColumnNames().toArray(new String[0]));
     }
 
     public static void printColumnsAsTable(List<Record> csvRecords, PrintStream ps, String... columnNames) {
