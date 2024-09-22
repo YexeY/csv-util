@@ -1,16 +1,18 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.csv;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.yexey.common.util.csv.imp.CSVPrinter;
-import org.yexey.common.util.csv.imp.CSVWriter;
-import org.yexey.common.util.csv.imp.Record;
-import org.yexey.common.util.csv.imp.ValidationError;
-import org.yexey.common.util.csv.imp.joins.CSVStreamFullJoin;
-import org.yexey.common.util.csv.imp.joins.CSVStreamJoin;
-import org.yexey.common.util.csv.imp.joins.CSVStreamLeftJoin;
-import org.yexey.common.util.csv.imp.joins.CSVStreamRightJoin;
+import org.yexey.common.csv.imp.CSVPrinter;
+import org.yexey.common.csv.imp.CSVWriter;
+import org.yexey.common.csv.imp.Record;
+import org.yexey.common.csv.imp.ValidationError;
+import org.yexey.common.csv.imp.exceptions.ColumnAlreadyExistsException;
+import org.yexey.common.csv.imp.exceptions.ColumnNotFoundException;
+import org.yexey.common.csv.imp.joins.CSVStreamFullJoin;
+import org.yexey.common.csv.imp.joins.CSVStreamJoin;
+import org.yexey.common.csv.imp.joins.CSVStreamLeftJoin;
+import org.yexey.common.csv.imp.joins.CSVStreamRightJoin;
 
 import java.io.IOException;
 import java.io.PrintStream;
@@ -22,13 +24,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CSVStream {
-    private final PrintStream ps;
 
     private Stream<Record> stream;
 
     private CSVStream(Stream<Record> stream) {
         this.stream = stream;
-        this.ps = System.out;
     }
 
     public static CSVStream toCSVStream(Reader reader, CSVFormat csvFormat) throws IOException {
@@ -72,7 +72,6 @@ public class CSVStream {
         Objects.requireNonNull(identity, "Identity must not be null");
         Objects.requireNonNull(accumulator, "Accumulator must not be null");
 
-
         return stream.reduce(identity, accumulator);
     }
 
@@ -87,7 +86,7 @@ public class CSVStream {
     public CSVStream rename(String columnBefore, String columnAfter) {
         var tmp = stream.map(record -> {
             if (!record.containsColumn(columnBefore)) {
-                throw new NullPointerException("Column " + columnBefore + " not found");
+                throw new ColumnNotFoundException("Column " + columnBefore + " not found");
             }
             return record.rename(columnBefore, columnAfter);
         });
@@ -97,7 +96,7 @@ public class CSVStream {
     public CSVStream mapColumn(String column, Function<String, String> function) {
         var tmp = stream.map(record -> {
             if (!record.containsColumn(column)) {
-                throw new NullPointerException("Column " + column + " not found");
+                throw new ColumnNotFoundException("Column " + column + " not found");
             }
             return record.put(column, function.apply(record.get(column)));
         });
@@ -122,7 +121,7 @@ public class CSVStream {
     public CSVStream filter(String column, Predicate<String> predicate) {
         var tmp = stream.filter(record -> {
             if (!record.containsColumn(column)) {
-                throw new NullPointerException("Column " + column + " not found");
+                throw new ColumnNotFoundException("Column " + column + " not found");
             }
             return predicate.test(record.get(column));
         });
@@ -132,7 +131,7 @@ public class CSVStream {
     public CSVStream addColumn(String columnName, Function<Record, String> valueFunction) {
         var tmp = stream.map(record -> {
             if (record.containsColumn(columnName)) {
-                throw new NullPointerException("Column " + columnName + " is already present");
+                throw new ColumnAlreadyExistsException("Column " + columnName + " is already present");
             }
             return record.put(columnName, valueFunction.apply(record));
         });
@@ -142,7 +141,7 @@ public class CSVStream {
     public CSVStream addColumn(String columnName, String staticValue) {
         var tmp = stream.map(record -> {
             if (record.containsColumn(columnName)) {
-                throw new NullPointerException("Column " + columnName + " is already present");
+                throw new ColumnAlreadyExistsException("Column " + columnName + " is already present");
             }
             return record.put(columnName, staticValue);
         });
@@ -152,7 +151,7 @@ public class CSVStream {
     public CSVStream fillMissingValues(String columnName, String defaultValue) {
         var tmp = stream.map(record -> {
             if (!record.containsColumn(columnName)) {
-                throw new NullPointerException("Column " + columnName + " not found");
+                throw new ColumnNotFoundException("Column " + columnName + " not found");
             }
             return record.putIfAbsent(columnName, defaultValue);
         });
@@ -176,8 +175,7 @@ public class CSVStream {
     }
 
     public void consume() {
-        stream.forEach(_ -> {
-        });
+        stream.forEach(_ -> {});
     }
 
     //-------------------------- Joining stuff
@@ -219,29 +217,64 @@ public class CSVStream {
 
     //-------------------------- Printing stuff
     public CSVStream printAsTable() {
+        return printAsTable(System.out);
+    }
+
+    public CSVStream printAsTable(PrintStream ps) {
         List<Record> list = stream.collect(Collectors.toList());
         CSVPrinter.printAsTable(list, ps);
         return new CSVStream(list.stream());
     }
 
     public CSVStream printColumnsAsTable(String... columnNames) {
+        return printColumnsAsTable(System.out, columnNames);
+    }
+
+    public CSVStream printColumnsAsTable(PrintStream ps, String... columnNames) {
         List<Record> list = stream.collect(Collectors.toList());
         CSVPrinter.printColumnsAsTable(list, ps, columnNames);
         return new CSVStream(list.stream());
     }
 
-    public CSVStream printColumns(String delimiter, String... columnNames) {
+    public CSVStream printColumns(String... columnNames) {
+        return printColumns(',', columnNames);
+    }
+
+    public CSVStream printColumns(PrintStream ps, String... columnNames) {
+        return printColumns(ps, ',', columnNames);
+    }
+
+    public CSVStream printColumns(char delimiter, String... columnNames) {
+        return printColumns(System.out, delimiter, columnNames);
+    }
+
+    public CSVStream printColumns(PrintStream ps, char delimiter, String... columnNames) {
+        Objects.requireNonNull(ps, "PrintStream must not be null");
+        Objects.requireNonNull(columnNames, "ColumnNames must not be null");
+
         Stream<Record> tmp = stream.peek(record -> CSVPrinter.printColumnsForSingleRecord(record, ps, delimiter, columnNames));
         return new CSVStream(tmp);
     }
 
-    public CSVStream print(String delimiter) {
+    public CSVStream print() {
+        return print(System.out, ',');
+    }
+
+    public CSVStream print(PrintStream ps) {
+        return print(ps, ',');
+    }
+
+    public CSVStream print(char delimiter) {
+        return print(System.out, delimiter);
+    }
+
+    public CSVStream print(PrintStream ps, char delimiter) {
         Stream<Record> tmp = stream.peek(record -> CSVPrinter.printSingleRecord(record, ps, delimiter));
         return new CSVStream(tmp);
     }
 
     //-------------------------- Validation Stuff
-    public CSVStream validateLazyAndThrowException(String column, Predicate<String> validator, Supplier<? extends RuntimeException> exceptionSupplier) {
+    public CSVStream validateAndThrowOnFailure(String column, Predicate<String> validator, Supplier<? extends RuntimeException> exceptionSupplier) {
         Objects.requireNonNull(column, "Column must not be null");
         Objects.requireNonNull(validator, "Validator must not be null");
         Objects.requireNonNull(exceptionSupplier, "Exception supplier must not be null");
@@ -255,7 +288,7 @@ public class CSVStream {
         return new CSVStream(validatedStream);
     }
 
-    public CSVStream validateLazyAndThrowException(Predicate<Record> validator, Supplier<? extends RuntimeException> exceptionSupplier) {
+    public CSVStream validateAndThrowOnFailure(Predicate<Record> validator, Supplier<? extends RuntimeException> exceptionSupplier) {
         Objects.requireNonNull(validator, "Validator must not be null");
         Objects.requireNonNull(exceptionSupplier, "Exception supplier must not be null");
 
@@ -274,10 +307,14 @@ public class CSVStream {
         List<ValidationError> errors = new ArrayList<>();
         List<Record> records = stream.toList();
         for (Record record : records) {
-            String value = record.get(column);
-            if (!validator.test(value)) {
-                String message = errorMessage != null ? errorMessage : "Validation failed for column: " + column;
-                errors.add(new ValidationError(record, message));
+            if (!record.containsColumn(column)) {
+                errors.add(new ValidationError(record, "Column " + column + " not found"));
+            } else {
+                String value = record.get(column);
+                if (!validator.test(value)) {
+                    String message = errorMessage != null ? errorMessage : "Validation failed for column: " + column;
+                    errors.add(new ValidationError(record, message));
+                }
             }
         }
         // Re-create the stream with collected records

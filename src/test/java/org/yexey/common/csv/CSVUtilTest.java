@@ -1,15 +1,11 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.csv;
 
 import org.apache.commons.csv.CSVFormat;
-import org.apache.commons.csv.CSVParser;
-import org.apache.commons.csv.CSVRecord;
 import org.junit.jupiter.api.Test;
 
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 class CSVUtilTest {
 

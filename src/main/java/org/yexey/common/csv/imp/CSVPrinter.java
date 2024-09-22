@@ -1,4 +1,4 @@
-package org.yexey.common.util.csv.imp;
+package org.yexey.common.csv.imp;
 
 import java.io.PrintStream;
 import java.util.Iterator;
@@ -61,7 +61,7 @@ public class CSVPrinter {
         }
     }
 
-    public static void printColumnsForSingleRecord(Record csvRecord, PrintStream ps, String delimiter, String... columnNames) {
+    public static void printColumnsForSingleRecord(Record csvRecord, PrintStream ps, Character delimiter, String... columnNames) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < columnNames.length; i++) {
             var columnName = columnNames[i];
@@ -73,9 +73,9 @@ public class CSVPrinter {
         ps.println(sb);
     }
 
-    public static void printSingleRecord(Record csvRecord, PrintStream ps, String delimiter) {
+    public static void printSingleRecord(Record csvRecord, PrintStream ps, Character delimiter) {
         StringBuilder sb = new StringBuilder();
-        for (Iterator<String> iterator = csvRecord.getValues().iterator(); iterator.hasNext(); ) {
+        for (Iterator<String> iterator = csvRecord.getValues().iterator(); iterator.hasNext();) {
             String value = iterator.next();
             sb.append(value);
             if (iterator.hasNext()) {

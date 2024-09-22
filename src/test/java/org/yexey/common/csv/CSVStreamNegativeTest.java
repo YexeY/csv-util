@@ -1,8 +1,9 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.csv;
 
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
-import org.yexey.common.util.csv.imp.Record;
+import org.yexey.common.csv.imp.Record;
+import org.yexey.common.csv.imp.exceptions.ColumnNotFoundException;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -32,7 +33,7 @@ class CSVStreamNegativeTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Attempt to rename a column that doesn't exist
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(ColumnNotFoundException.class, () -> {
             csvStream.rename("Height", "Stature")
                     .mapColumn("Height", val -> val.toUpperCase())
                     .toList();
@@ -44,11 +45,10 @@ class CSVStreamNegativeTest {
         String csvData = "Name,Age\n" +
                          "Bob,25";
         StringReader reader = new StringReader(csvData);
-        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader())
-                .mapColumn("Height", val -> val.toUpperCase());
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Attempt to map a nonexistent column
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(ColumnNotFoundException.class, () -> {
                     csvStream.mapColumn("Height", val -> val.toUpperCase())
                             .toList();
         });
@@ -80,7 +80,7 @@ class CSVStreamNegativeTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Attempt to filter on a nonexistent column
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(ColumnNotFoundException.class, () -> {
             csvStream.filter("Country", val -> "USA".equals(val))
                     .toList();
         });
@@ -102,7 +102,7 @@ class CSVStreamNegativeTest {
         CSVStream csvStreamB = CSVStream.toCSVStream(readerB, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Attempt to join on a key column that doesn't exist in one of the streams
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(ColumnNotFoundException.class, () -> {
             CSVStream joinedStream = csvStreamA.join(csvStreamB, "ID", "User_ID");
             joinedStream.toList();
         });
@@ -130,7 +130,7 @@ class CSVStreamNegativeTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Fill missing values for a nonexistent column
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(ColumnNotFoundException.class, () -> {
             csvStream.fillMissingValues("Country", "Unknown")
                             .toList();
         });

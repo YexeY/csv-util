@@ -1,4 +1,4 @@
-package org.yexey.common.util.csv.imp;
+package org.yexey.common.csv.imp;
 
 public class ValidationError {
     private final Record record;

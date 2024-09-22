@@ -1,14 +1,17 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.csv;
 
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
-import org.yexey.common.util.csv.imp.Record;
+import org.yexey.common.csv.imp.Record;
+import org.yexey.common.csv.imp.ValidationError;
+import org.yexey.common.csv.imp.exceptions.ColumnAlreadyExistsException;
 
-import java.io.IOException;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -470,7 +473,7 @@ class CSVStreamTest {
         CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
 
         // Add a column "Status" with static value "Pending"
-        assertThrows(NullPointerException.class, () -> {
+        assertThrows(ColumnAlreadyExistsException.class, () -> {
             csvStream.addColumn("Status", "Pending")
                     .toList();
         });
@@ -539,5 +542,387 @@ class CSVStreamTest {
         assertEquals("Canada", records.get(2).get("Country"));    // Length 6
     }
 
+    @Test
+    void testWriteTo_StringWriter() throws IOException {
+        String csvData = "Name,Age,Country\n" +
+                "Alice,30,USA\n" +
+                "Bob,25,UK";
+        StringReader reader = new StringReader(csvData);
 
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        StringWriter writer = new StringWriter();
+        csvStream.writeTo(writer, CSVFormat.DEFAULT.withHeader("Name", "Age", "Country"));
+
+        String expectedOutput = "Name,Age,Country\r\n" +
+                "Alice,30,USA\r\n" +
+                "Bob,25,UK\r\n";
+
+        assertEquals(expectedOutput, writer.toString());
+    }
+
+    @Test
+    void testWriteTo_EmptyStream() throws IOException {
+        String csvData = "Name,Age,Country";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        StringWriter writer = new StringWriter();
+        csvStream.writeTo(writer, CSVFormat.DEFAULT.withHeader("Name", "Age", "Country"));
+
+        String expectedOutput = "Name,Age,Country\r\n";
+
+        assertEquals(expectedOutput, writer.toString());
+    }
+
+    @Test
+    void testWriteTo_CustomDelimiter() throws IOException {
+        String csvData = "Name;Age;Country\n" +
+                "Alice;30;USA\n" +
+                "Bob;25;UK";
+        StringReader reader = new StringReader(csvData);
+
+        CSVFormat customFormat = CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader();
+        CSVStream csvStream = CSVStream.toCSVStream(reader, customFormat);
+
+        StringWriter writer = new StringWriter();
+        csvStream.writeTo(writer, customFormat.DEFAULT.withHeader("Name", "Country").withDelimiter(';'));
+
+        String expectedOutput = "Name;Country\r\n" +
+                "Alice;USA\r\n" +
+                "Bob;UK\r\n";
+
+        assertEquals(expectedOutput, writer.toString());
+    }
+
+    @Test
+    void testWriteTo_CustomDelimiter_All_Headers() throws IOException {
+        String csvData = "Name;Age;Country\n" +
+                "Alice;30;USA\n" +
+                "Bob;25;UK";
+        StringReader reader = new StringReader(csvData);
+
+        CSVFormat customFormat = CSVFormat.DEFAULT.withDelimiter(';').withFirstRecordAsHeader();
+        CSVStream csvStream = CSVStream.toCSVStream(reader, customFormat);
+
+        StringWriter writer = new StringWriter();
+        csvStream.writeTo(writer, customFormat.DEFAULT.withDelimiter(';'));
+
+        String expectedOutput = "Name;Age;Country\r\n" +
+                "Alice;30;USA\r\n" +
+                "Bob;25;UK\r\n";
+
+        assertEquals(expectedOutput, writer.toString());
+    }
+
+    @Test
+    void testReduce_SumOfAges() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30\n" +
+                "Bob,25\n" +
+                "Charlie,35";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        Optional<Record> result = csvStream.reduce((record1, record2) -> {
+            int age1 = Integer.parseInt(record1.get("Age"));
+            int age2 = Integer.parseInt(record2.get("Age"));
+            Record newRecord = new Record();
+            newRecord.put("Age", String.valueOf(age1 + age2));
+            return newRecord;
+        });
+
+        assertTrue(result.isPresent());
+        assertEquals("90", result.get().get("Age"));
+    }
+
+    @Test
+    void testReduce_FindOldestPerson() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30\n" +
+                "Bob,45\n" +
+                "Charlie,35";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        Optional<Record> oldestPerson = csvStream.reduce((record1, record2) -> {
+            int age1 = Integer.parseInt(record1.get("Age"));
+            int age2 = Integer.parseInt(record2.get("Age"));
+            return age1 >= age2 ? record1 : record2;
+        });
+
+        assertTrue(oldestPerson.isPresent());
+        assertEquals("Bob", oldestPerson.get().get("Name"));
+    }
+
+    @Test
+    void testReduce_EmptyStream() throws IOException {
+        String csvData = "Name,Age";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        Optional<Record> result = csvStream.reduce((record1, record2) -> record1);
+
+        assertFalse(result.isPresent());
+    }
+
+
+    @Test
+    void testPrintColumnsAsTable_PrintStream() throws IOException {
+        String csvData = "Name,Age,Country\n" +
+                "Alice,30,USA\n" +
+                "Bob,25,UK";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        // Capture the output
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+
+        csvStream.printColumnsAsTable(ps, "Name", "Country");
+
+        String expectedOutput = "Name   Country  \r\n" +
+                                "-----  -------  \r\n" +
+                                "Alice  USA      \r\n" +
+                                "Bob    UK       \r\n";
+
+        assertEquals(expectedOutput, baos.toString());
+    }
+
+    @Test
+    void testPrintColumnsAsTable_NonexistentColumn() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30\n" +
+                "Bob,25";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        // Capture the output
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+
+        csvStream.printColumnsAsTable(ps, "Name", "Country");
+
+        String expectedOutput = "Name   Country  \r\n" +
+                                "-----  -------  \r\n" +
+                                "Alice           \r\n" +
+                                "Bob             \r\n";
+
+        assertEquals(expectedOutput, baos.toString());
+    }
+
+    @Test
+    void testPrint_CommaDelimiter() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30\n" +
+                "Bob,25";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+
+        csvStream.print(ps, ',').consume();
+
+        String expectedOutput = "Alice,30\r\n" +
+                "Bob,25\r\n";
+
+        assertEquals(expectedOutput, baos.toString());
+    }
+
+    @Test
+    void testPrint_TabDelimiter() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Charlie,35\n" +
+                "David,40";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+
+        csvStream.print(ps, '\t')
+                .consume();
+
+        String expectedOutput = "Charlie\t35\r\n" +
+                                "David\t40\r\n";
+
+        assertEquals(expectedOutput, baos.toString());
+    }
+
+    @Test
+    void testPrint_EmptyStream() throws IOException {
+        String csvData = "Name,Age";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        PrintStream ps = new PrintStream(baos);
+
+        csvStream.print(ps, ',');
+
+        String expectedOutput = "";
+
+        assertEquals(expectedOutput, baos.toString());
+    }
+
+    @Test
+    void testValidateAndThrowOnFailure_Column_Passes() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30\n" +
+                "Bob,35";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        csvStream = csvStream.validateAndThrowOnFailure("Age", ageStr -> Integer.parseInt(ageStr) >= 30, () -> new IllegalStateException("Age must be at least 30"));
+
+        // Consume the stream without exception
+        csvStream.consume();
+    }
+
+    @Test
+    void testValidateAndThrowOnFailure_Column_Fails() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,25\n" +
+                "Bob,35";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        csvStream = csvStream.validateAndThrowOnFailure("Age", ageStr -> Integer.parseInt(ageStr) >= 30, () -> new IllegalStateException("Age must be at least 30"));
+
+        // Expect an exception when consuming the stream
+        IllegalStateException exception = assertThrows(IllegalStateException.class, csvStream::consume);
+        assertEquals("Age must be at least 30", exception.getMessage());
+    }
+
+    @Test
+    void testValidateAndThrowOnFailure_Record_Passes() throws IOException {
+        String csvData = "Name,Age,Country\n" +
+                "Alice,30,USA\n" +
+                "Bob,35,UK";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        Predicate<Record> validator = record -> "USA".equals(record.get("Country")) || "UK".equals(record.get("Country"));
+
+        csvStream = csvStream.validateAndThrowOnFailure(validator, () -> new IllegalArgumentException("Invalid country"));
+
+        // Consume the stream without exception
+        csvStream.consume();
+    }
+
+    @Test
+    void testValidateAndThrowOnFailure_Record_Fails() throws IOException {
+        String csvData = "Name,Age,Country\n" +
+                "Alice,30,USA\n" +
+                "Charlie,40,Canada";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        Predicate<Record> validator = record -> "USA".equals(record.get("Country")) || "UK".equals(record.get("Country"));
+
+        csvStream = csvStream.validateAndThrowOnFailure(validator, () -> new IllegalArgumentException("Invalid country"));
+
+        // Expect an exception when consuming the stream
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, csvStream::consume);
+        assertEquals("Invalid country", exception.getMessage());
+    }
+
+    @Test
+    void testValidateAndThrowOnFailure_NullPredicate() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        // Null predicate should throw NullPointerException
+        assertThrows(NullPointerException.class, () -> {
+            csvStream.validateAndThrowOnFailure("Age", null, () -> new RuntimeException("Validation failed"));
+        });
+
+        // Null exception supplier should throw NullPointerException
+        assertThrows(NullPointerException.class, () -> {
+            csvStream.validateAndThrowOnFailure("Age", ageStr -> true, null);
+        });
+    }
+
+    @Test
+    void testValidateEager_Passes() throws IOException {
+        String csvData = "Name,Age\n" +
+                "Alice,30\n" +
+                "Bob,35";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        List<ValidationError> errors = csvStream.validateEager("Age", ageStr -> Integer.parseInt(ageStr) >= 30, "Age must be at least 30");
+
+        // No errors should be collected
+        assertTrue(errors.isEmpty());
+    }
+
+    @Test
+    void testValidateEager_Fails() throws IOException {
+        String csvData = "Name,Age\n" +
+                         "Alice,25\n" +
+                         "Bob,35\n" +
+                         "Charlie,28";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        List<ValidationError> errors = csvStream.validateEager("Age", ageStr -> Integer.parseInt(ageStr) >= 30, "Age must be at least 30");
+
+        // Two records should have validation errors
+        assertEquals(2, errors.size());
+
+        assertEquals("Alice", errors.get(0).getRecord().get("Name"));
+        assertEquals("Age must be at least 30", errors.get(0).getMessage());
+
+        assertEquals("Charlie", errors.get(1).getRecord().get("Name"));
+        assertEquals("Age must be at least 30", errors.get(1).getMessage());
+    }
+
+    @Test
+    void testValidateEager_NonexistentColumn() throws IOException {
+        String csvData = "Name,Age\n" +
+                         "Alice,30";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        // Expect an exception when validating a non-existent column
+
+        List<ValidationError> validation = csvStream.validateEager("Height", value -> true, "Height is required");
+
+        assertFalse(validation.isEmpty());
+    }
+
+    @Test
+    void testValidateEager_NullPredicate() throws IOException {
+        String csvData = "Name,Age\n" +
+                         "Alice,30";
+        StringReader reader = new StringReader(csvData);
+
+        CSVStream csvStream = CSVStream.toCSVStream(reader, CSVFormat.DEFAULT.withFirstRecordAsHeader());
+
+        // Null predicate should throw NullPointerException
+        assertThrows(NullPointerException.class, () -> {
+            csvStream.validateEager("Age", null, "Validator must not be null");
+        });
+    }
 }

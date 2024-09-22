@@ -1,9 +1,8 @@
-package org.yexey.common.util.csv.imp;
+package org.yexey.common.csv.imp;
 
 import org.apache.commons.csv.CSVRecord;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Record {
 
@@ -70,7 +69,7 @@ public class Record {
     }
 
     public Record retainColumns(String... columnNames) {
-        List<String> list = Arrays.stream(columnNames).collect(Collectors.toList());
+        List<String> list = Arrays.stream(columnNames).toList();
         for(String column : new ArrayList<>(getColumnNames())) {
             if(!list.contains(column)) {
                 this.deleteColumn(column);
@@ -102,7 +101,7 @@ public class Record {
 
     // Clone the record
     public Record clone() {
-        return new Record(new LinkedHashMap<>(this.data));
+        return new Record(new LinkedHashMap<>(data));
     }
 
     // Override toString for easy printing

@@ -1,8 +1,8 @@
-package org.yexey.common.util.csv;
+package org.yexey.common.csv;
 
 import org.apache.commons.csv.CSVFormat;
 import org.junit.jupiter.api.Test;
-import org.yexey.common.util.csv.imp.Record;
+import org.yexey.common.csv.imp.Record;
 
 import java.io.IOException;
 import java.io.StringReader;

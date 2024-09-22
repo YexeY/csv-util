@@ -1,38 +1,29 @@
-package org.yexey.common.util.csv.imp.joins;
+package org.yexey.common.csv.imp.joins;
 
-import org.yexey.common.util.csv.imp.Record;
+import org.yexey.common.csv.imp.Record;
 
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CSVStreamJoin {
+public class CSVStreamLeftJoin {
 
     /**
-     * INNER JOIN:
-     * When you only want records that have matching values in both tables.
-     * Example: Finding customers who have placed orders.
+     * LEFT JOIN:
+     *
+     * When you need all records from the left table, regardless of matches.
+     * Example: Listing all products, including those that haven't been sold.
      */
-    public static Stream<Record> join(Stream<Record> streamA, Stream<Record> streamB, String keyColumnA, String keyColumnB) {
+    public static Stream<Record> leftJoin(Stream<Record> streamA, Stream<Record> streamB, String keyColumnA, String keyColumnB) {
         // Collect streamB into a Map from key to List of Records
         Map<String, List<Record>> mapB = streamB
-                .filter(record -> {
-                    if(!record.containsColumn(keyColumnB)) {
-                        throw new NullPointerException("KeyColumn " + keyColumnB + " does not exists in StreamB");
-                    }
-                    return record.get(keyColumnB) != null;
-                })
+                .filter(record -> record.get(keyColumnB) != null)
                 .collect(Collectors.groupingBy(record -> record.get(keyColumnB)));
 
-        // Perform the inner join
+        // Perform the left join
         return streamA
-                .filter(recordA -> {
-                    if(!recordA.containsColumn(keyColumnA)) {
-                        throw new NullPointerException("KeyColumn " + keyColumnA + " does not exists in StreamA");
-                    }
-                    return recordA.get(keyColumnA) != null;
-                })
+                .filter(recordA -> recordA.get(keyColumnA) != null)
                 .flatMap(recordA -> {
                     String keyA = recordA.get(keyColumnA);
                     List<Record> matchingRecordsB = mapB.get(keyA);
@@ -42,11 +33,12 @@ public class CSVStreamJoin {
                         return matchingRecordsB.stream()
                                 .map(recordB -> mergeRecords(recordA, recordB, keyColumnB));
                     } else {
-                        // No match found; exclude recordA from the result
-                        return Stream.empty();
+                        // No match found; merge recordA with null (recordB)
+                        return Stream.of(mergeRecords(recordA, null, keyColumnB));
                     }
                 });
     }
+
 
     // Helper method to merge two records
     private static Record mergeRecords(Record recordA, Record recordB, String keyColumnB) {
